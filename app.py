@@ -12,9 +12,8 @@ from datetime import datetime, timedelta
 app = Flask(__name__, template_folder='templates')
 app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here-change-in-production')
 
-# SocketIO初期化
-ASYNC_MODE = os.getenv('ASYNC_MODE', 'eventlet')
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode=ASYNC_MODE)
+# SocketIO初期化 (gunicornと互換性のあるthreadingモードを使用)
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # データベースファイルパス
 DB_PATH = os.getenv('DB_PATH', 'data/alldatabase.json')
