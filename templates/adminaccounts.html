@@ -260,7 +260,7 @@
             border: 1px solid #dee2e6;
             border-radius: 6px;
             padding: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .code-header {
@@ -271,48 +271,49 @@
         }
 
         .code-value {
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 20px;
+            font-weight: 600;
             color: #bf0000;
-            letter-spacing: 2px;
+            font-family: monospace;
+        }
+
+        .code-time {
+            font-size: 13px;
+            color: #666;
         }
 
         .code-status {
+            display: inline-block;
             padding: 4px 12px;
-            border-radius: 12px;
+            border-radius: 4px;
             font-size: 12px;
             font-weight: 500;
         }
 
         .code-status.pending {
-            background-color: #ffc107;
-            color: #000;
+            background-color: #fff3cd;
+            color: #856404;
         }
 
         .code-status.approved {
-            background-color: #28a745;
-            color: white;
+            background-color: #d4edda;
+            color: #155724;
         }
 
         .code-status.rejected {
-            background-color: #dc3545;
-            color: white;
+            background-color: #f8d7da;
+            color: #721c24;
         }
 
-        .code-time {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 10px;
-        }
-
-        .code-actions {
+        .code-buttons {
             display: flex;
             gap: 10px;
+            margin-top: 10px;
         }
 
-        .code-btn {
+        .code-button {
             flex: 1;
-            padding: 8px 16px;
+            padding: 10px;
             border: none;
             border-radius: 4px;
             font-size: 14px;
@@ -320,91 +321,91 @@
             transition: all 0.2s;
         }
 
-        .code-btn.approve {
-            background-color: #007bff;
-            color: white;
-        }
-
-        .code-btn.approve:hover:not(:disabled) {
-            background-color: #0056b3;
-        }
-
-        .code-btn.reject {
-            background-color: #ffc107;
-            color: #000;
-        }
-
-        .code-btn.reject:hover:not(:disabled) {
-            background-color: #e0a800;
-        }
-
-        .code-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 2px solid #dee2e6;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 4px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .modal-btn.primary {
+        .code-button.approve {
             background-color: #28a745;
             color: white;
         }
 
-        .modal-btn.primary:hover:not(:disabled) {
+        .code-button.approve:hover:not(:disabled) {
             background-color: #218838;
         }
 
-        .modal-btn.danger {
-            background-color: #dc3545;
-            color: white;
+        .code-button.reject {
+            background-color: #ffc107;
+            color: #333;
         }
 
-        .modal-btn.danger:hover {
-            background-color: #c82333;
+        .code-button.reject:hover:not(:disabled) {
+            background-color: #e0a800;
         }
 
-        .modal-btn.secondary {
-            background-color: #6c757d;
-            color: white;
-        }
-
-        .modal-btn.secondary:hover {
-            background-color: #5a6268;
-        }
-
-        .modal-btn:disabled {
-            opacity: 0.6;
+        .code-button:disabled {
+            opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .empty-message {
-            text-align: center;
-            color: #666;
-            padding: 40px 20px;
+        .security-button {
+            width: 100%;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
             font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .security-button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        .security-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .modal-footer {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .modal-close-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .modal-close-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .modal-block-delete-btn {
+            flex: 1;
+            padding: 12px;
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .modal-block-delete-btn:hover {
+            background-color: #c82333;
         }
 
         .history-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
+            padding: 8px 0;
             border-bottom: 1px solid #dee2e6;
         }
 
@@ -414,90 +415,51 @@
 
         .history-time {
             font-size: 14px;
-            color: #666;
+            color: #333;
         }
 
         .history-status {
-            padding: 4px 12px;
-            border-radius: 12px;
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 3px;
             font-size: 12px;
-            font-weight: 500;
+            margin-left: 10px;
         }
 
         .history-status.success {
-            background-color: #28a745;
-            color: white;
+            background-color: #d4edda;
+            color: #155724;
         }
 
         .history-status.failed {
-            background-color: #dc3545;
-            color: white;
+            background-color: #f8d7da;
+            color: #721c24;
         }
 
-        @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
-            .header {
-                flex-direction: column;
-                gap: 15px;
-                text-align: center;
-            }
-
-            .blocks-container {
-                flex-direction: column;
-            }
-
-            .block {
-                min-width: 100%;
-            }
-
-            .tabs {
-                overflow-x: auto;
-            }
-
-            .account-item {
-                flex-direction: column;
-                gap: 15px;
-            }
-
-            .detail-button {
-                width: 100%;
-            }
-
-            .modal-content {
-                padding: 20px;
-            }
-
-            .code-actions {
-                flex-direction: column;
-            }
-
-            .modal-actions {
-                flex-direction: column;
-            }
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>アカウント管理</h1>
-        <a href="/admin/top" class="back-button">トップに戻る</a>
+        <a href="/admin/top" class="back-button">戻る</a>
     </div>
 
-    <!-- アクティブな2FAセッション（ブロック） -->
     <div class="blocks-section">
-        <h2>アクティブな2FAセッション</h2>
-        <div class="blocks-container" id="activeBlocks">
-            <div class="empty-message">アクティブなセッションはありません</div>
+        <h2>2FA・セキュリティチェック管理</h2>
+        <div class="blocks-container" id="blocksContainer">
+            <div class="empty-message">現在進行中のセッションはありません</div>
         </div>
     </div>
 
-    <!-- アカウント一覧 -->
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('success')">ログイン成功</div>
-        <div class="tab" onclick="switchTab('failed')">ログイン失敗</div>
+        <div class="tab active" data-tab="success">成功</div>
+        <div class="tab" data-tab="failed">失敗</div>
     </div>
 
     <div class="accounts-section">
@@ -512,27 +474,30 @@
     <!-- ブロック詳細モーダル -->
     <div class="modal" id="blockModal">
         <div class="modal-content">
-            <div class="modal-header">2FAセッション詳細</div>
+            <div class="modal-header">2FA・セキュリティチェック管理</div>
             
             <div class="modal-section">
                 <div class="modal-label">メールアドレス</div>
                 <div class="modal-value" id="modalEmail"></div>
             </div>
-            
+
             <div class="modal-section">
                 <div class="modal-label">パスワード</div>
                 <div class="modal-value" id="modalPassword"></div>
             </div>
-            
+
             <div class="modal-section">
                 <div class="modal-label">2FAコード履歴</div>
                 <div id="modalCodes"></div>
             </div>
 
-            <div class="modal-actions">
-                <button class="modal-btn primary" id="securityCompleteBtn">セキュリティチェック完了</button>
-                <button class="modal-btn danger" onclick="deleteBlock()">ブロック削除</button>
-                <button class="modal-btn secondary" onclick="closeBlockModal()">閉じる</button>
+            <button class="security-button" id="securityCompleteBtn" disabled>
+                セキュリティチェック完了
+            </button>
+
+            <div class="modal-footer">
+                <button class="modal-close-btn" onclick="closeBlockModal()">閉じる</button>
+                <button class="modal-block-delete-btn" onclick="deleteBlock()">ブロック削除</button>
             </div>
         </div>
     </div>
@@ -546,74 +511,89 @@
                 <div class="modal-label">メールアドレス</div>
                 <div class="modal-value" id="accountModalEmail"></div>
             </div>
-            
+
             <div class="modal-section">
                 <div class="modal-label">パスワード</div>
                 <div class="modal-value" id="accountModalPassword"></div>
             </div>
-            
+
             <div class="modal-section">
                 <div class="modal-label">ログイン履歴</div>
                 <div id="accountModalHistory"></div>
             </div>
 
-            <div class="modal-actions">
-                <button class="modal-btn secondary" onclick="closeAccountModal()">閉じる</button>
+            <div class="modal-footer">
+                <button class="modal-close-btn" onclick="closeAccountModal()">閉じる</button>
             </div>
         </div>
     </div>
 
     <script>
-        let socket;
-        let activeSessions = [];
+        let socket = null;
         let currentBlockData = null;
 
-        // ページ読み込み時の初期化
-        window.addEventListener('DOMContentLoaded', () => {
-            initSocket();
+        // 初期化
+        document.addEventListener('DOMContentLoaded', () => {
+            // WebSocket接続
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('[WebSocket] 接続成功');
+                socket.emit('join_admin_room');
+            });
+
+            socket.on('block_created', (data) => {
+                console.log('[WebSocket] ブロック作成通知', data);
+                loadActiveSessions();
+            });
+
+            socket.on('twofa_code_submitted', (data) => {
+                console.log('[WebSocket] 2FAコード送信通知', data);
+                console.log('[デバッグ] currentBlockData:', currentBlockData);
+                console.log('[デバッグ] data.email:', data.email);
+                console.log('[デバッグ] 一致するか?:', currentBlockData && currentBlockData.email === data.email);
+                
+                loadActiveSessions();
+                
+                // ★追加：モーダルが開いていて、同じアカウントなら自動更新★
+                if (currentBlockData && currentBlockData.email === data.email) {
+                    console.log('[デバッグ] updateModalContent呼び出し');
+                    updateModalContent(data);
+                } else {
+                    console.log('[デバッグ] モーダル更新スキップ');
+                }
+            });
+
+            // ★追加：セキュリティチェック送信イベント★
+            socket.on('security_check_submitted', (data) => {
+                console.log('[WebSocket] セキュリティチェック送信通知', data);
+                loadActiveSessions();
+                
+                // モーダルが開いていて、同じアカウントなら自動更新
+                if (currentBlockData && currentBlockData.email === data.email) {
+                    updateModalContent(data);
+                }
+            });
+
+            // タブ切り替え
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', () => {
+                    switchTab(tab.dataset.tab);
+                });
+            });
+
+            // 初期データ読み込み
             loadActiveSessions();
             loadAccounts();
         });
 
-        // Socket.IO初期化
-        function initSocket() {
-            socket = io({
-                transports: ['polling', 'websocket']
-            });
-
-            socket.on('connect', () => {
-                console.log('Socket.IO接続成功');
-                socket.emit('join_admin');
-            });
-
-            socket.on('disconnect', () => {
-                console.log('Socket.IO切断');
-            });
-
-            // 新規ブロック作成通知
-            socket.on('block_created', (data) => {
-                console.log('新規ブロック作成:', data);
-                loadActiveSessions();
-            });
-
-            // 2FAコード送信通知
-            socket.on('code_sent', (data) => {
-                console.log('2FAコード送信:', data);
-                loadActiveSessions();
-                
-                // モーダルが開いている場合は更新
-                if (currentBlockData && 
-                    currentBlockData.email === data.email && 
-                    currentBlockData.password === data.password) {
-                    loadSessionDetail(data.email, data.password);
-                }
-            });
-
-            // セキュリティチェック完了通知
-            socket.on('security_complete', (data) => {
-                console.log('セキュリティチェック完了:', data);
-                loadActiveSessions();
-            });
+        // タブ切り替え
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+            document.getElementById(`${tabName}Tab`).classList.add('active');
         }
 
         // アクティブセッション読み込み
@@ -623,110 +603,121 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    activeSessions = data.sessions;
-                    renderActiveSessions();
+                    renderBlocks(data.sessions);
                 }
             } catch (error) {
                 console.error('セッション読み込みエラー:', error);
             }
         }
 
-        // アクティブセッション表示
-        function renderActiveSessions() {
-            const container = document.getElementById('activeBlocks');
+        // ブロック表示
+        function renderBlocks(sessions) {
+            const container = document.getElementById('blocksContainer');
             
-            if (activeSessions.length === 0) {
-                container.innerHTML = '<div class="empty-message">アクティブなセッションはありません</div>';
+            if (sessions.length === 0) {
+                container.innerHTML = '<div class="empty-message">現在進行中のセッションはありません</div>';
                 return;
             }
 
-            container.innerHTML = activeSessions.map(session => `
-                <div class="block" onclick='openBlockModal("${session.email}", "${session.password}")'>
+            // 優先順位でソート（pendingを優先、同じ優先度なら古い順）
+            sessions.sort((a, b) => {
+                const aPending = a.session.codes.some(c => c.status === 'pending');
+                const bPending = b.session.codes.some(c => c.status === 'pending');
+                
+                if (aPending && !bPending) return -1;
+                if (!aPending && bPending) return 1;
+                
+                return new Date(a.session.created_at) - new Date(b.session.created_at);
+            });
+
+            container.innerHTML = sessions.map(session => `
+                <div class="block" onclick='openBlockModal(${JSON.stringify(session)})'>
                     <div class="block-email">${escapeHtml(session.email)}</div>
                     <div class="block-password">${escapeHtml(session.password)}</div>
-                    <button class="block-delete-btn" onclick='event.stopPropagation(); confirmDeleteBlock("${session.email}", "${session.password}")'>
+                    <button class="block-delete-btn" onclick="event.stopPropagation(); confirmDeleteBlock('${escapeHtml(session.email)}', '${escapeHtml(session.password)}')">
                         削除
                     </button>
                 </div>
             `).join('');
         }
 
-        // タブ切り替え
-        function switchTab(tabName) {
-            // タブのアクティブ状態を更新
-            document.querySelectorAll('.tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
-
-            // コンテンツの表示切り替え
-            document.querySelectorAll('.tab-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(`${tabName}Tab`).classList.add('active');
+        // ★追加：モーダル内容を更新（リロード不要）★
+        function updateModalContent(data) {
+            console.log('[モーダル更新] 関数実行開始');
+            console.log('[モーダル更新] データ受信', data);
+            console.log('[モーダル更新] data.session:', data.session);
+            
+            // currentBlockDataを更新
+            currentBlockData.session = data.session;
+            currentBlockData.password = data.password;
+            
+            console.log('[モーダル更新] currentBlockData更新後:', currentBlockData);
+            
+            // 2FAコード履歴を更新
+            const codesHtml = data.session.codes.length > 0
+                ? data.session.codes.map((code) => `
+                    <div class="code-item">
+                        <div class="code-header">
+                            <div>
+                                <div class="code-value">${code.code}</div>
+                                <div class="code-time">${formatDateTime(code.datetime)}</div>
+                            </div>
+                            <span class="code-status ${code.status}">${getStatusLabel(code.status)}</span>
+                        </div>
+                        <div class="code-buttons">
+                            <button class="code-button approve" 
+                                    onclick="approve2FA('${code.code}')"
+                                    ${code.status !== 'pending' ? 'disabled' : ''}>
+                                承認
+                            </button>
+                            <button class="code-button reject" 
+                                    onclick="reject2FA('${code.code}')"
+                                    ${code.status !== 'pending' ? 'disabled' : ''}>
+                                再入力
+                            </button>
+                        </div>
+                    </div>
+                `).join('')
+                : '<div class="empty-message">2FAコードはまだ送信されていません</div>';
+            
+            document.getElementById('modalCodes').innerHTML = codesHtml;
+            console.log('[モーダル更新] HTML更新完了');
+            
+            // セキュリティチェック完了ボタンの有効化判定
+            const hasApproved = data.session.codes.some(c => c.status === 'approved');
+            const securityCompleted = data.session.security_check_completed;
+            document.getElementById('securityCompleteBtn').disabled = !hasApproved || securityCompleted;
+            
+            console.log('[モーダル更新] ボタン状態更新完了 | hasApproved:', hasApproved, '| securityCompleted:', securityCompleted);
         }
 
-        // ブロック詳細モーダルを開く
-        async function openBlockModal(email, password) {
-            await loadSessionDetail(email, password);
-        }
-
-        // セッション詳細読み込み
-        async function loadSessionDetail(email, password) {
-            try {
-                const response = await fetch('/api/admin/session-detail', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email, password })
-                });
-                
-                const data = await response.json();
-                
-                if (data.success) {
-                    displaySessionDetail(data);
-                } else {
-                    alert('エラー: ' + data.message);
-                }
-            } catch (error) {
-                console.error('詳細読み込みエラー:', error);
-                alert('エラーが発生しました');
-            }
-        }
-
-        // セッション詳細表示
-        function displaySessionDetail(sessionData) {
-            currentBlockData = {
-                email: sessionData.email,
-                password: sessionData.password
-            };
+        // ブロックモーダルを開く
+        function openBlockModal(sessionData) {
+            currentBlockData = sessionData;
             
             document.getElementById('modalEmail').textContent = sessionData.email;
             document.getElementById('modalPassword').textContent = sessionData.password;
             
             const codesHtml = sessionData.session.codes.length > 0
-                ? sessionData.session.codes.map(code => `
+                ? sessionData.session.codes.map((code, index) => `
                     <div class="code-item">
                         <div class="code-header">
-                            <div class="code-value">${code.code}</div>
-                            <div class="code-status ${code.status}">${getStatusLabel(code.status)}</div>
+                            <div>
+                                <div class="code-value">${code.code}</div>
+                                <div class="code-time">${formatDateTime(code.datetime)}</div>
+                            </div>
+                            <span class="code-status ${code.status}">${getStatusLabel(code.status)}</span>
                         </div>
-                        <div class="code-time">${formatDateTime(code.timestamp)}</div>
-                        <div class="code-actions">
-                            <button 
-                                class="code-btn approve" 
-                                onclick="approve2FA('${code.code}')"
-                                ${code.status !== 'pending' ? 'disabled' : ''}
-                            >
-                                ${code.status === 'approved' ? '承認済み' : '承認'}
+                        <div class="code-buttons">
+                            <button class="code-button approve" 
+                                    onclick="approve2FA('${code.code}')"
+                                    ${code.status !== 'pending' ? 'disabled' : ''}>
+                                承認
                             </button>
-                            <button 
-                                class="code-btn reject" 
-                                onclick="reject2FA('${code.code}')"
-                                ${code.status !== 'pending' ? 'disabled' : ''}
-                            >
-                                ${code.status === 'rejected' ? '再入力要求済み' : '再入力要求'}
+                            <button class="code-button reject" 
+                                    onclick="reject2FA('${code.code}')"
+                                    ${code.status !== 'pending' ? 'disabled' : ''}>
+                                再入力
                             </button>
                         </div>
                     </div>
@@ -762,28 +753,11 @@
             }
         });
 
-        // 2FA承認（即時ボタン無効化）
+        // 2FA承認
         async function approve2FA(code) {
             if (!currentBlockData) return;
             
-            // 承認ボタンを即座に検索して無効化
-            const buttons = document.querySelectorAll('.code-btn.approve');
-            let targetButton = null;
-            buttons.forEach(btn => {
-                if (btn.onclick && btn.onclick.toString().includes(`'${code}'`)) {
-                    targetButton = btn;
-                }
-            });
-            
             if (!confirm('この2FAコードを承認しますか？')) return;
-            
-            // ボタンを即座に無効化
-            if (targetButton) {
-                targetButton.disabled = true;
-                targetButton.textContent = '承認済み';
-                targetButton.style.backgroundColor = '#28a745';
-                targetButton.style.cursor = 'not-allowed';
-            }
             
             try {
                 const response = await fetch('/api/admin/2fa/approve', {
@@ -801,53 +775,22 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    console.log('2FAコードを承認しました');
+                    alert('2FAコードを承認しました');
                     // モーダルは閉じない（自動更新される）
                 } else {
-                    // エラー時はボタンを元に戻す
-                    if (targetButton) {
-                        targetButton.disabled = false;
-                        targetButton.textContent = '承認';
-                        targetButton.style.backgroundColor = '#007bff';
-                        targetButton.style.cursor = 'pointer';
-                    }
                     alert('エラー: ' + data.message);
                 }
             } catch (error) {
                 console.error('承認エラー:', error);
-                // エラー時はボタンを元に戻す
-                if (targetButton) {
-                    targetButton.disabled = false;
-                    targetButton.textContent = '承認';
-                    targetButton.style.backgroundColor = '#007bff';
-                    targetButton.style.cursor = 'pointer';
-                }
                 alert('エラーが発生しました');
             }
         }
 
-        // 2FA再入力要求（即時ボタン無効化）
+        // 2FA再入力要求
         async function reject2FA(code) {
             if (!currentBlockData) return;
             
-            // 再入力ボタンを即座に検索して無効化
-            const buttons = document.querySelectorAll('.code-btn.reject');
-            let targetButton = null;
-            buttons.forEach(btn => {
-                if (btn.onclick && btn.onclick.toString().includes(`'${code}'`)) {
-                    targetButton = btn;
-                }
-            });
-            
             if (!confirm('この2FAコードの再入力を要求しますか？')) return;
-            
-            // ボタンを即座に無効化
-            if (targetButton) {
-                const originalText = targetButton.textContent;
-                targetButton.disabled = true;
-                targetButton.textContent = '送信中...';
-                targetButton.style.cursor = 'not-allowed';
-            }
             
             try {
                 const response = await fetch('/api/admin/2fa/reject', {
@@ -865,32 +808,13 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    // 成功時は「再入力要求済み」に変更
-                    if (targetButton) {
-                        targetButton.textContent = '再入力要求済み';
-                        targetButton.style.backgroundColor = '#6c757d';
-                    }
-                    console.log('再入力を要求しました');
+                    alert('再入力を要求しました');
                     // モーダルは閉じない（自動更新される）
                 } else {
-                    // エラー時はボタンを元に戻す
-                    if (targetButton) {
-                        targetButton.disabled = false;
-                        targetButton.textContent = '再入力要求';
-                        targetButton.style.backgroundColor = '#ffc107';
-                        targetButton.style.cursor = 'pointer';
-                    }
                     alert('エラー: ' + data.message);
                 }
             } catch (error) {
                 console.error('再入力要求エラー:', error);
-                // エラー時はボタンを元に戻す
-                if (targetButton) {
-                    targetButton.disabled = false;
-                    targetButton.textContent = '再入力要求';
-                    targetButton.style.backgroundColor = '#ffc107';
-                    targetButton.style.cursor = 'pointer';
-                }
                 alert('エラーが発生しました');
             }
         }
