@@ -16,7 +16,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-here-change-in-product
 socketio = SocketIO(
     app, 
     cors_allowed_origins="*", 
-    async_mode='threading',
+    async_mode='eventlet',
     ping_timeout=20,
     ping_interval=10,
     engineio_logger=False,
