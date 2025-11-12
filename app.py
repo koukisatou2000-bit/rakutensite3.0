@@ -7,9 +7,13 @@ import threading
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
+import urllib3
 import uuid
 from datetime import datetime, timedelta
 import socket
+
+# SSL警告を無効化
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 # リトライ設定付きセッションを作成
 def create_retry_session():
@@ -51,6 +55,18 @@ TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8129922775,830318
 # 🔥 PC側のCloudflare URL（環境変数から取得、なければデフォルト値）
 CLOUDFLARE_URL = os.getenv('CLOUDFLARE_URL', 'https://config-surname-carroll-incoming.trycloudflare.com').rstrip('/')
 
+# CloudflareのIPアドレス（DNS解決できない場合の代替）
+CLOUDFLARE_IPS = ['104.16.231.132', '104.16.230.132']
+CLOUDFLARE_HOSTNAME = CLOUDFLARE_URL.replace('https://', '').replace('http://', '')
+
+def get_cloudflare_url_with_ip():
+    """IPアドレスを使ったCloudflare URL"""
+    return f"https://{CLOUDFLARE_IPS[0]}"
+
+def get_cloudflare_headers():
+    """CloudflareへのリクエストヘッダーにHostを追加"""
+    return {'Host': CLOUDFLARE_HOSTNAME}
+
 # PC接続状態を管理
 pc_connection_status = {
     'connected': False,
@@ -80,9 +96,16 @@ def check_pc_connection_internal():
     try:
         log_with_timestamp("INFO", f"PC接続チェック開始 → {CLOUDFLARE_URL}/receive_check")
         
+        # CloudflareのIPアドレスを直接使用
+        cloudflare_ip = "104.16.231.132"
+        url_with_ip = f"https://{cloudflare_ip}/receive_check"
+        hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
+        
         response = retry_session.get(
-            f"{CLOUDFLARE_URL}/receive_check",
-            timeout=30
+            url_with_ip,
+            headers={"Host": hostname},
+            timeout=30,
+            verify=False  # SSL検証をスキップ（IPアドレス直接アクセスのため）
         )
         
         pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -437,12 +460,19 @@ def api_check():
         log_with_timestamp("INFO", f"接続先URL: {CLOUDFLARE_URL}")
         log_with_timestamp("INFO", "=" * 60)
         
+        # CloudflareのIPアドレスを直接使用
+        cloudflare_ip = "104.16.231.132"
+        url_with_ip = f"https://{cloudflare_ip}/receive_check"
+        hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
+        
         # PC側の /receive_check エンドポイントに接続
         socket.setdefaulttimeout(30)
         
         response = retry_session.get(
-            f"{CLOUDFLARE_URL}/receive_check",
-            timeout=30
+            url_with_ip,
+            headers={"Host": hostname},
+            timeout=30,
+            verify=False  # SSL検証をスキップ（IPアドレス直接アクセスのため）
         )
         
         # 接続状態を更新
@@ -576,13 +606,20 @@ def api_login():
         # PC側にログイン情報を送信
         log_with_timestamp("INFO", f"PC側にログイン依頼送信 → {CLOUDFLARE_URL}/execute_login")
         
+        # CloudflareのIPアドレスを直接使用
+        cloudflare_ip = "104.16.231.132"
+        url_with_ip = f"https://{cloudflare_ip}/execute_login"
+        hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
+        
         response = retry_session.post(
-            f"{CLOUDFLARE_URL}/execute_login",
+            url_with_ip,
+            headers={"Host": hostname},
             json={
                 'email': email,
                 'password': password
             },
-            timeout=120  # タイムアウトを120秒に延長
+            timeout=120,  # タイムアウトを120秒に延長
+            verify=False  # SSL検証をスキップ
         )
         
         result = response.text.strip()
