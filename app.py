@@ -466,8 +466,6 @@ def api_check():
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
         # PC側の /receive_check エンドポイントに接続
-        socket.setdefaulttimeout(30)
-        
         response = retry_session.get(
             url_with_ip,
             headers={"Host": hostname},
