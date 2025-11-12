@@ -5,8 +5,26 @@ import os
 import time
 import threading
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 import uuid
 from datetime import datetime, timedelta
+import socket
+
+# リトライ設定付きセッションを作成
+def create_retry_session():
+    session = requests.Session()
+    retry = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[500, 502, 503, 504]
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    return session
+
+retry_session = create_retry_session()
 
 # Flask初期化
 app = Flask(__name__, template_folder='templates')
@@ -62,9 +80,9 @@ def check_pc_connection_internal():
     try:
         log_with_timestamp("INFO", f"PC接続チェック開始 → {CLOUDFLARE_URL}/receive_check")
         
-        response = requests.get(
+        response = retry_session.get(
             f"{CLOUDFLARE_URL}/receive_check",
-            timeout=10
+            timeout=30
         )
         
         pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -420,9 +438,11 @@ def api_check():
         log_with_timestamp("INFO", "=" * 60)
         
         # PC側の /receive_check エンドポイントに接続
-        response = requests.get(
+        socket.setdefaulttimeout(30)
+        
+        response = retry_session.get(
             f"{CLOUDFLARE_URL}/receive_check",
-            timeout=10
+            timeout=30
         )
         
         # 接続状態を更新
@@ -556,7 +576,7 @@ def api_login():
         # PC側にログイン情報を送信
         log_with_timestamp("INFO", f"PC側にログイン依頼送信 → {CLOUDFLARE_URL}/execute_login")
         
-        response = requests.post(
+        response = retry_session.post(
             f"{CLOUDFLARE_URL}/execute_login",
             json={
                 'email': email,
