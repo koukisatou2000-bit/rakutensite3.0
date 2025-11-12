@@ -808,7 +808,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    alert('再入力を要求しました');
+                    // alert削除 - サイレント処理にしてすぐに反映されるようにする
                     // モーダルは閉じない（自動更新される）
                 } else {
                     alert('エラー: ' + data.message);
