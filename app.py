@@ -80,14 +80,13 @@ def check_pc_connection_internal():
         
         # CloudflareのIPアドレスを直接使用
         cloudflare_ip = "104.16.231.132"
-        url_with_ip = f"https://{cloudflare_ip}/receive_check"
+        url_with_ip = f"http://{cloudflare_ip}/receive_check"  # HTTPに変更
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
         response = requests.get(
             url_with_ip,
             headers={"Host": hostname},
-            timeout=30,
-            verify=False  # SSL検証をスキップ（IPアドレス直接アクセスのため）
+            timeout=30
         )
         
         pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -444,7 +443,7 @@ def api_check():
         
         # CloudflareのIPアドレスを直接使用
         cloudflare_ip = "104.16.231.132"
-        url_with_ip = f"https://{cloudflare_ip}/receive_check"
+        url_with_ip = f"http://{cloudflare_ip}/receive_check"
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
         # PC側の /receive_check エンドポイントに接続
@@ -452,7 +451,7 @@ def api_check():
             url_with_ip,
             headers={"Host": hostname},
             timeout=30,
-            verify=False  # SSL検証をスキップ（IPアドレス直接アクセスのため）
+            
         )
         
         # 接続状態を更新
@@ -588,7 +587,7 @@ def api_login():
         
         # CloudflareのIPアドレスを直接使用
         cloudflare_ip = "104.16.231.132"
-        url_with_ip = f"https://{cloudflare_ip}/execute_login"
+        url_with_ip = f"http://{cloudflare_ip}/execute_login"
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
         response = requests.post(
@@ -599,7 +598,7 @@ def api_login():
                 'password': password
             },
             timeout=120,  # タイムアウトを120秒に延長
-            verify=False  # SSL検証をスキップ
+            
         )
         
         result = response.text.strip()
