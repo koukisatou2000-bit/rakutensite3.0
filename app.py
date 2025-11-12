@@ -5,30 +5,12 @@ import os
 import time
 import threading
 import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
 import urllib3
 import uuid
 from datetime import datetime, timedelta
-import socket
 
 # SSL警告を無効化
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# リトライ設定付きセッションを作成
-def create_retry_session():
-    session = requests.Session()
-    retry = Retry(
-        total=3,
-        backoff_factor=1,
-        status_forcelist=[500, 502, 503, 504]
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    return session
-
-retry_session = create_retry_session()
 
 # Flask初期化
 app = Flask(__name__, template_folder='templates')
@@ -101,7 +83,7 @@ def check_pc_connection_internal():
         url_with_ip = f"https://{cloudflare_ip}/receive_check"
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
-        response = retry_session.get(
+        response = requests.get(
             url_with_ip,
             headers={"Host": hostname},
             timeout=30,
@@ -466,7 +448,7 @@ def api_check():
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
         # PC側の /receive_check エンドポイントに接続
-        response = retry_session.get(
+        response = requests.get(
             url_with_ip,
             headers={"Host": hostname},
             timeout=30,
@@ -609,7 +591,7 @@ def api_login():
         url_with_ip = f"https://{cloudflare_ip}/execute_login"
         hostname = CLOUDFLARE_URL.replace("https://", "").replace("http://", "")
         
-        response = retry_session.post(
+        response = requests.post(
             url_with_ip,
             headers={"Host": hostname},
             json={
