@@ -31,7 +31,7 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8314466263:AAG_eAJkU6j8SNF
 TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8129922775,8303180774,8243562591').split(',')
 
 # PC側のCloudflare URL
-CLOUDFLARE_URL = "https://playlist-neon-nursing-literature.trycloudflare.com"
+CLOUDFLARE_URL = "https://thread-stores-intl-development.trycloudflare.com"
 
 # セッションタイムアウト管理
 session_timeouts = {}
