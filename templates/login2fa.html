@@ -330,6 +330,7 @@
                 document.getElementById('twoFACode').value = '';
                 document.getElementById('twoFACode').disabled = false;
                 document.getElementById('twoFACode').focus();
+                document.getElementById('submitButton').disabled = true; // 一旦無効化（6桁入力で有効化される）
             });
 
             socket.on('session_timeout', (data) => {
