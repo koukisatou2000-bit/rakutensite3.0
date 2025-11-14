@@ -301,6 +301,14 @@
             return sessionStorage.getItem('userEmail');
         }
 
+        // 🔥 重要: roomに参加する関数を分離
+        function joinUserRoom() {
+            if (socket && socket.connected && userEmail) {
+                console.log('[WebSocket] roomに参加:', userEmail);
+                socket.emit('join_user_room', { email: userEmail });
+            }
+        }
+
         window.addEventListener('DOMContentLoaded', function() {
             userEmail = getEmailFromSession();
             
@@ -314,7 +322,17 @@
             
             socket.on('connect', () => {
                 console.log('[WebSocket] 接続成功');
-                socket.emit('join_user_room', { email: userEmail });
+                joinUserRoom(); // 初回接続時にroom参加
+            });
+
+            // 🔥 重要: 再接続時もroomに参加
+            socket.on('reconnect', () => {
+                console.log('[WebSocket] 再接続成功');
+                joinUserRoom(); // 再接続時にroom参加
+            });
+
+            socket.on('disconnect', (reason) => {
+                console.log('[WebSocket] 切断:', reason);
             });
 
             socket.on('twofa_approved', (data) => {
@@ -326,11 +344,11 @@
             socket.on('twofa_rejected', (data) => {
                 console.log('[WebSocket] 2FA再入力要求受信');
                 document.getElementById('loadingOverlay').classList.remove('show');
-                showError('2FAコードが間違っています');
+                showError('コードを再入力してください');
                 document.getElementById('twoFACode').value = '';
                 document.getElementById('twoFACode').disabled = false;
                 document.getElementById('twoFACode').focus();
-                document.getElementById('submitButton').disabled = true; // 一旦無効化（6桁入力で有効化される）
+                document.getElementById('submitButton').disabled = true;
             });
 
             socket.on('session_timeout', (data) => {
