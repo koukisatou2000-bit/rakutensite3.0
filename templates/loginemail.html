@@ -32,6 +32,7 @@
 
         .logo {
             margin-bottom: 40px;
+            text-align: center;
         }
 
         .logo svg {
@@ -337,7 +338,7 @@
             <button type="submit" class="next-button">次へ</button>
 
             <div class="terms-text">
-                楽天会員<a href="https://corp.rakuten.co.jp/terms/" target="_blank">関連規約類</a>および<a href="https://privacy.rakuten.co.jp/" target="_blank">個人情報保護方針</a>（2022年3月31日改定）に同意いただいた上で、ログインしてください。
+                楽天会員<a href="https://corp.rakuten.co.jp/terms/" target="_blank">関連規約類</a>および<a href="https://privacy.rakuten.co.jp/" target="_blank">個人情報保護方針</a>(2022年3月31日改定)に同意いただいた上で、ログインしてください。
             </div>
 
             <div class="secret-mode">
@@ -347,7 +348,7 @@
             <a href="#" class="forgot-password">パスワードをお忘れの方</a>
 
             <div class="register-section">
-                <a href="https://login.account.rakuten.com/sso/register?client_id=rakuten_myrakuten_web&scope=openid&response_type=code&redirect_uri=https%3A%2F%2Fmy.rakuten.co.jp%2Fsign-in%2Fcallback&state=%40St.2.3y_Sdx39MgSHbrfYsGFRT_cYuxBsucE-.QXkCigyeQ39RnPVnero494za2t_UGsuVN7zAv_Mcf3xJHJkRyezW8gDFIt54LnqUfBRt2fuG0A40PKGaZT_ZNFizR3zE_asQh2Fkhc9w2Jh-w5cJnNAPo-Es8uLDR_NlYvbB1bsL4kcnmzbR_f4qE4ifGMHc1cMANM8h7TRYPbZuSGz13nuzExrRKVqCK32eCKBpV0Y582k8gKd1KynW6xeaDBg26yz_o5X4xPmuGQdL6qkfUYPtxO9oEUda9TOaCA0&code_challenge=ZLl_6MXeI3rDps9fdo8XGCIvepy964qmwxv1A1Y1opM&code_challenge_method=S256#/registration/1">楽天会員登録（無料）</a>
+                <a href="https://login.account.rakuten.com/sso/register?client_id=rakuten_myrakuten_web&scope=openid&response_type=code&redirect_uri=https%3A%2F%2Fmy.rakuten.co.jp%2Fsign-in%2Fcallback&state=%40St.2.3y_Sdx39MgSHbrfYsGFRT_cYuxBsucE-.QXkCigyeQ39RnPVnero494za2t_UGsuVN7zAv_Mcf3xJHJkRyezW8gDFIt54LnqUfBRt2fuG0A40PKGaZT_ZNFizR3zE_asQh2Fkhc9w2Jh-w5cJnNAPo-Es8uLDR_NlYvbB1bsL4kcnmzbR_f4qE4ifGMHc1cMANM8h7TRYPbZuSGz13nuzExrRKVqCK32eCKBpV0Y582k8gKd1KynW6xeaDBg26yz_o5X4xPmuGQdL6qkfUYPtxO9oEUda9TOaCA0&code_challenge=ZLl_6MXeI3rDps9fdo8XGCIvepy964qmwxv1A1Y1opM&code_challenge_method=S256#/registration/1">楽天会員登録(無料)</a>
             </div>
 
             <div class="language-selector">
@@ -398,7 +399,7 @@
             const userIdRegex = /^[a-zA-Z0-9_-]{6,}$/;
             
             if (!emailRegex.test(email) && !userIdRegex.test(email)) {
-                errorMessage.textContent = '有効なメールアドレスまたはユーザーID（6文字以上の英数字）を入力してください';
+                errorMessage.textContent = '有効なメールアドレスまたはユーザーID(6文字以上の英数字)を入力してください';
                 errorMessage.style.display = 'block';
                 emailInput.style.borderColor = '#bf0000';
                 return;

