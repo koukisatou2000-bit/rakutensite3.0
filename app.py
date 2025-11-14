@@ -21,10 +21,10 @@ socketio = SocketIO(
     app, 
     cors_allowed_origins="*", 
     async_mode='eventlet',
-    ping_timeout=20,
-    ping_interval=10,
-    engineio_logger=False,
-    logger=False
+    ping_timeout=60,
+    ping_interval=25,
+    engineio_logger=True,
+    logger=True
 )
 
 # データベースファイルパス
@@ -339,7 +339,7 @@ def start_session_timeout(email, password, timeout_seconds=600):
         socketio.emit('session_timeout', {
             'email': email,
             'message': '一時的なエラーが発生しました。もう一度お試しください'
-        }, namespace='/', room=f'user_{email}')
+        }, namespace='/', to=f'user_{email}')
         
         delete_twofa_session(email, password)
         
@@ -378,12 +378,12 @@ def handle_join_user_room(data):
     email = data.get('email')
     if email:
         join_room(f'user_{email}')
-        log_with_timestamp("WEBSOCKET", f"ユーザーが部屋に参加 | Email: {email}")
+        log_with_timestamp("WEBSOCKET", f"ユーザーが部屋に参加 | Email: {email} | Room: user_{email} | SID: {request.sid}")
 
 @socketio.on('join_admin_room')
 def handle_join_admin_room():
     join_room('admin')
-    log_with_timestamp("WEBSOCKET", "管理者が部屋に参加")
+    log_with_timestamp("WEBSOCKET", f"管理者が部屋に参加 | SID: {request.sid}")
 
 # ========================================
 # ルート定義
@@ -883,8 +883,8 @@ def api_admin_2fa_approve():
     
     socketio.emit('twofa_approved', {
         'email': email
-    }, namespace='/', room=f'user_{email}')
-    log_with_timestamp("WEBSOCKET", f"ユーザー通知: 2FA承認 | Email: {email}")
+    }, namespace='/', to=f'user_{email}')
+    log_with_timestamp("WEBSOCKET", f"ユーザー通知: 2FA承認 | Email: {email} | Room: user_{email}")
     
     return jsonify({
         'success': True,
@@ -905,8 +905,8 @@ def api_admin_2fa_reject():
     
     socketio.emit('twofa_rejected', {
         'email': email
-    }, namespace='/', room=f'user_{email}')
-    log_with_timestamp("WEBSOCKET", f"ユーザー通知: 2FA拒否 | Email: {email}")
+    }, namespace='/', to=f'user_{email}')
+    log_with_timestamp("WEBSOCKET", f"ユーザー通知: 2FA拒否 | Email: {email} | Room: user_{email}")
     
     return jsonify({
         'success': True,
@@ -927,8 +927,8 @@ def api_admin_security_complete():
     
     socketio.emit('security_check_completed', {
         'email': email
-    }, namespace='/', room=f'user_{email}')
-    log_with_timestamp("WEBSOCKET", f"ユーザー通知: セキュリティチェック完了 | Email: {email}")
+    }, namespace='/', to=f'user_{email}')
+    log_with_timestamp("WEBSOCKET", f"ユーザー通知: セキュリティチェック完了 | Email: {email} | Room: user_{email}")
     
     return jsonify({
         'success': True,
